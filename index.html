@@ -523,7 +523,8 @@ const TASKS=[
   {n:"English Writing",             s:870, e:945,  d:["Mon","Tue","Wed","Thur"],                     p:10,  c:"Learning",  ug:"u"},
   /* ── Creative ── */
   {n:"Drawing",                     s:960, e:990,  d:["Mon","Wed"],                                  p:10,  c:"Creative",  ug:"u"},
-  {n:"Music Practice",              s:960, e:990,  d:["Tue","Thur","Sat"],                           p:5,   c:"Creative",  ug:"m"},
+  {n:"Drawing",                     s:540, e:600,  d:["Sat"],                                         p:10,  c:"Creative",  ug:"u"},
+  {n:"Music Practice",              s:960, e:990,  d:["Tue","Thur","Sat"],                            p:5,   c:"Creative",  ug:"m"},
   {n:"Snack",                       s:990, e:1005, d:["Mon","Tue","Wed","Thur","Fri","Sat"],        p:null,c:"Self care", ug:"l"},
   /* ── Mon Jun 1–7: Tennis 5:00–6:30 PM, Dinner 7:00–8:00 PM ── */
   {n:"Tennis",                      s:1020,e:1110, d:["Mon"], dateRange:[1,7],                       p:null,c:"Physical",  ug:"m"},
@@ -585,6 +586,7 @@ let mustN=[
 let taskState={};
 let claimedRewards={};
 let balance=0;
+let bonusPoints={};   /* key: "d-dn" → bonus pts awarded that day */
 let editPtsKey=null, editRewIdx=-1, mustType=null;
 let pendPenIdx=null, pendPenPts=null, lastPenIdx=null, lastPenPts=null;
 let curDay=null, curDayName=null;
@@ -598,7 +600,7 @@ const STORE_KEY='ishaan_summer_2026';
 function saveState(){
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      taskState, claimedRewards, balance,
+      taskState, claimedRewards, balance, bonusPoints,
       mustM, mustN,
       REWARDS: REWARDS.map(r=>({n:r.n,p:r.p})),
       PENALTIES: PENALTIES.filter(p=>!p._meta).map(p=>({n:p.n,p:p.p,type:p.type,action:p.action||''})),
@@ -614,6 +616,7 @@ function loadState(){
     if(s.taskState) taskState=s.taskState;
     if(s.claimedRewards) claimedRewards=s.claimedRewards;
     if(typeof s.balance==='number') balance=s.balance;
+    if(s.bonusPoints) bonusPoints=s.bonusPoints;
     if(s.mustM&&s.mustM.length) mustM=s.mustM;
     if(s.mustN&&s.mustN.length) mustN=s.mustN;
     if(s.REWARDS&&s.REWARDS.length) REWARDS.splice(0,REWARDS.length,...s.REWARDS);
@@ -640,6 +643,7 @@ function showScreen(id){
   const idx={cal:0,dash:1,sum:2}[id];
   if(idx!==undefined) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
   if(id==='sum') buildBarChart();
+  if(id==='dash') buildMissedTasks(currentWeekStart);
 }
 function updateBalanceDisplay(){
   document.getElementById('bal').textContent=balance+' pts';
@@ -715,22 +719,55 @@ function buildCal(){
   }
 }
 
-/* ── STREAK ── */
-function buildStreak(dn){
-  const di=DO.indexOf(dn);
-  const c=document.getElementById('streak-days'); c.innerHTML='';
+/* ── STREAK ── real data: check if all urgent tasks done for each day this week ── */
+function isDayDone(date, dn){
+  if(date < SUMMER_START) return null; // pre-summer, ignore
+  const tasks=tasksForDay(date,dn);
+  const urgents=tasks.filter(t=>t.ug==='u');
+  if(urgents.length===0) return null; // no urgent tasks = free day
+  return urgents.every((_,i)=>{
+    // find actual index in sorted task list
+    const sorted=tasks.sort((a,b)=>a.s-b.s);
+    const globalIdx=sorted.indexOf(urgents[i]);
+    return taskState[`${date}-${dn}-${globalIdx}`]||false;
+  });
+}
+function buildStreak(viewedDay, viewedDn){
+  // Find the Monday of the week containing the viewed day
+  const di=DO.indexOf(viewedDn); // 0=Mon … 6=Sun
+  const mondayDate=viewedDay-di; // date of Monday this week
   const labels=['M','T','W','T','F','S','S'];
+  const c=document.getElementById('streak-days'); c.innerHTML='';
+  let streak=0;
   labels.forEach((l,i)=>{
+    const dayDate=mondayDate+i;
+    const dn=DO[i];
     const el=document.createElement('div');
+    const isViewed=(i===di);
     let cls='sday ';
-    if(i===di) cls+='today-s';
-    else if(i<di) cls+=(i%2===0?'done':'miss');
-    else cls+='future';
+    if(isViewed){
+      cls+='today-s';
+    } else if(dayDate < SUMMER_START || dayDate > 30){
+      cls+='future'; // outside range
+    } else {
+      const done=isDayDone(dayDate,dn);
+      if(done===null) cls+='future';   // free day / no data
+      else if(done)   cls+='done';
+      else            cls+='miss';
+    }
     el.className=cls; el.textContent=l; c.appendChild(el);
   });
-  const doneCount=labels.slice(0,di).filter((_,i)=>i%2===0).length;
+  // Count consecutive done days ending at (or before) viewed day
+  for(let i=di-1;i>=0;i--){
+    const dd=mondayDate+i;
+    const dn2=DO[i];
+    if(dd<SUMMER_START||dd>30) break;
+    const done=isDayDone(dd,dn2);
+    if(done===true) streak++;
+    else if(done===false) break;
+  }
   document.getElementById('streak-lbl').textContent=
-    doneCount>0?`This week — ${doneCount} day streak!`:'This week';
+    streak>0?`This week — ${streak} day streak!`:'This week';
 }
 
 /* ── DAY VIEW ── */
@@ -742,7 +779,7 @@ function openDay(d,dn){
   const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
   document.getElementById('dsub').textContent=
     tasks.length+' tasks'+(isSun?' — free day, bike & relax!':'');
-  buildStreak(dn);
+  buildStreak(d, dn);
   const list=document.getElementById('tlist'); list.innerHTML='';
   let earned=0;
   let lastBlock='';
@@ -774,27 +811,44 @@ function openDay(d,dn){
       (t.p!=null?`<div class="tpts">${t.p} pts<span class="ped" onclick="openPtsEdit(event,'${k}',${t.p})">✏</span></div>`:'');
     list.appendChild(el);
   });
+  // Add bonus points earned today
+  const bonusKey=`${d}-${dn}`;
+  if(bonusPoints[bonusKey]) earned+=bonusPoints[bonusKey];
   document.getElementById('ptsd').textContent=earned+' pts';
+
+  // ── Bonus button ──
+  const bonusDiv=document.createElement('div');
+  bonusDiv.style.cssText='margin-top:14px;padding:12px;background:var(--amber-bg);border:0.5px solid #EF9F2740;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px';
+  const alreadyGiven=!!bonusPoints[bonusKey];
+  bonusDiv.innerHTML=`
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--amber-l)">⭐ Daily Bonus</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${alreadyGiven?'Already awarded today':'Award if the day was spent well'}</div>
+    </div>
+    <button onclick="giveBonus(${d},'${dn}')"
+      style="padding:7px 14px;border-radius:var(--radius-pill);border:none;font-size:12px;font-weight:700;font-family:var(--font);cursor:${alreadyGiven?'default':'pointer'};background:${alreadyGiven?'var(--surface3)':'var(--amber)'};color:${alreadyGiven?'var(--hint)':'#1a0e00'}">
+      ${alreadyGiven?'Given ✓':'+15 pts'}
+    </button>`;
+  list.appendChild(bonusDiv);
   showScreen('day');
 }
 
 function toggleTask(d,dn,i){
   const k=`${d}-${dn}-${i}`;
   taskState[k]=!taskState[k];
-  /* Recalculate balance from all ticked tasks minus claimed rewards */
-  let totalEarned=0;
-  Object.entries(taskState).forEach(([key,done])=>{
-    if(!done) return;
-    const p=key.split('-'), ti=parseInt(p[p.length-1]), tdn=p[1];
-    const ts=TASKS.filter(t=>t.d.includes(tdn)).sort((a,b)=>a.s-b.s);
-    if(ts[ti]&&ts[ti].p) totalEarned+=ts[ti].p;
-  });
-  const totalSpent=Object.keys(claimedRewards).reduce((s,i)=>s+REWARDS[i].p,0);
-  const totalPenalties=PENALTIES._applied||0;
-  balance=Math.max(0,totalEarned-totalSpent-totalPenalties);
-  updateBalanceDisplay();
-  buildRewards();
+  recalcBalance();
   if(taskState[k]) showToast('Task done! +pts earned');
+  openDay(d,dn);
+  saveState();
+}
+
+/* ── BONUS ── */
+function giveBonus(d,dn){
+  const key=`${d}-${dn}`;
+  if(bonusPoints[key]) return; // already given
+  bonusPoints[key]=15;
+  recalcBalance();
+  showToast('⭐ Bonus 15 pts awarded!');
   openDay(d,dn);
   saveState();
 }
@@ -821,13 +875,75 @@ function savePts(){
   saveState();
 }
 
+/* ── MISSED TASKS — real data ── */
+let currentWeekStart=1; // track which week is selected
+function buildMissedTasks(weekStartDate){
+  currentWeekStart=weekStartDate;
+  const list=document.getElementById('missed-list');
+  list.innerHTML='';
+  const missed=[];
+  for(let i=0;i<7;i++){
+    const d=weekStartDate+i;
+    if(d<SUMMER_START||d>30) continue;
+    const dn=DO[i];
+    const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
+    tasks.forEach((t,ti)=>{
+      const k=`${d}-${dn}-${ti}`;
+      const done=taskState[k]||false;
+      if(!done && t.ug!=='l'){  // exclude snack/low urgency
+        missed.push({name:t.n, day:dn.slice(0,3), ug:t.ug});
+      }
+    });
+  }
+  document.getElementById('dm').textContent=missed.length;
+  // Also update pts for the week
+  let weekPts=0;
+  for(let i=0;i<7;i++){
+    const d=weekStartDate+i;
+    if(d<SUMMER_START||d>30) continue;
+    const dn=DO[i];
+    const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
+    tasks.forEach((t,ti)=>{
+      const k=`${d}-${dn}-${ti}`;
+      if(taskState[k]&&t.p) weekPts+=t.p;
+    });
+    const bk=`${d}-${dn}`;
+    if(bonusPoints[bk]) weekPts+=bonusPoints[bk];
+  }
+  document.getElementById('dp').textContent=weekPts;
+  if(missed.length===0){
+    list.innerHTML='<div style="font-size:12px;color:var(--hint);padding:6px 0">No missed tasks this week — great job! ⭐</div>';
+    return;
+  }
+  missed.sort((a,b)=>(a.ug==='u'?0:1)-(b.ug==='u'?0:1));
+  missed.slice(0,8).forEach(m=>{
+    const div=document.createElement('div'); div.className='mrow';
+    div.innerHTML=`${m.ug==='u'?'<span class="mbadge u">Urgent</span>':'<span class="mbadge m">Medium</span>'}`+
+      `<span style="flex:1;color:var(--text);font-size:12px">${m.name}</span>`+
+      `<span style="font-size:11px;color:var(--muted);font-weight:600">${m.day}</span>`;
+    list.appendChild(div);
+  });
+  if(missed.length>8){
+    const more=document.createElement('div');
+    more.style.cssText='font-size:11px;color:var(--hint);padding:5px 0;text-align:center';
+    more.textContent=`+${missed.length-8} more missed`;
+    list.appendChild(more);
+  }
+}
+
 /* ── WEEK TABS ── */
 function buildWTabs(){
   const c=document.getElementById('wtabs');
-  ['Jun 1–7','Jun 8–14','Jun 15–21','Jun 22–28'].forEach((w,i)=>{
+  const weeks=[['Jun 1–7',1],['Jun 8–14',8],['Jun 15–21',15],['Jun 22–28',22]];
+  weeks.forEach(([label,startDate],i)=>{
     const b=document.createElement('button'); b.className='wtab'+(i===0?' active':'');
-    b.textContent=w;
-    b.onclick=()=>{document.querySelectorAll('.wtab').forEach(x=>x.classList.remove('active'));b.classList.add('active');};
+    b.textContent=label;
+    b.onclick=()=>{
+      document.querySelectorAll('.wtab').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      buildMissedTasks(startDate);
+      buildRewards();
+    };
     c.appendChild(b);
   });
 }
@@ -890,6 +1006,8 @@ function recalcBalance(){
     const ts=TASKS.filter(t=>t.d.includes(dn)).sort((a,b)=>a.s-b.s);
     if(ts[i]&&ts[i].p) earned+=ts[i].p;
   });
+  // Add bonus points
+  Object.values(bonusPoints).forEach(b=>earned+=b);
   const spent=Object.keys(claimedRewards).reduce((s,i)=>s+REWARDS[i].p,0);
   const penalised=PENALTIES._applied||0;
   balance=Math.max(0,earned-spent-penalised);
@@ -1100,6 +1218,7 @@ loadState();
 buildMust();
 buildCal();
 buildWTabs();
+buildMissedTasks(1);
 buildRewards();
 buildPenalties();
 buildBarChart();
