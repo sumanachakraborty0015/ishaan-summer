@@ -592,7 +592,7 @@ let pendPenIdx=null, pendPenPts=null, lastPenIdx=null, lastPenPts=null;
 let curDay=null, curDayName=null;
 let undoTimer=null;
 
-const TODAY=30;
+const TODAY = (()=>{ const now=new Date(); return (now.getFullYear()===2026&&now.getMonth()===5) ? now.getDate() : (now<new Date(2026,5,1)?0:30); })();
 const SUMMER_START=3;
 const STORE_KEY='ishaan_summer_2026';
 
@@ -719,17 +719,17 @@ function buildCal(){
   }
 }
 
-/* ── STREAK ── real data: check if all urgent tasks done for each day this week ── */
+/* ── STREAK ── real data: only past days can be done/missed ── */
 function isDayDone(date, dn){
-  if(date < SUMMER_START) return null; // pre-summer, ignore
+  if(date < SUMMER_START) return null;
+  if(date > TODAY) return null;        // future — never count as missed
   const tasks=tasksForDay(date,dn);
   const urgents=tasks.filter(t=>t.ug==='u');
-  if(urgents.length===0) return null; // no urgent tasks = free day
-  return urgents.every((_,i)=>{
-    // find actual index in sorted task list
-    const sorted=tasks.sort((a,b)=>a.s-b.s);
-    const globalIdx=sorted.indexOf(urgents[i]);
-    return taskState[`${date}-${dn}-${globalIdx}`]||false;
+  if(urgents.length===0) return null;
+  const sorted=tasks.slice().sort((a,b)=>a.s-b.s);
+  return urgents.every(t=>{
+    const idx=sorted.indexOf(t);
+    return taskState[`${date}-${dn}-${idx}`]||false;
   });
 }
 function buildStreak(viewedDay, viewedDn){
@@ -884,7 +884,7 @@ function buildMissedTasks(weekStartDate){
   const missed=[];
   for(let i=0;i<7;i++){
     const d=weekStartDate+i;
-    if(d<SUMMER_START||d>30) continue;
+    if(d<SUMMER_START||d>30||d>TODAY) continue;  // skip future & pre-summer
     const dn=DO[i];
     const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
     tasks.forEach((t,ti)=>{
@@ -900,7 +900,7 @@ function buildMissedTasks(weekStartDate){
   let weekPts=0;
   for(let i=0;i<7;i++){
     const d=weekStartDate+i;
-    if(d<SUMMER_START||d>30) continue;
+    if(d<SUMMER_START||d>30||d>TODAY) continue;  // skip future
     const dn=DO[i];
     const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
     tasks.forEach((t,ti)=>{
