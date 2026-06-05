@@ -385,15 +385,15 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
           <div style="font-size:11px;color:var(--teal);font-weight:700;margin-top:2px">total points earned</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600">— 0 penalties deducted</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600">— 0 rewards claimed</div>
-          <div style="font-size:12px;color:var(--teal-l);font-weight:800">= 0 pts carry forward</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600" id="sum-penalties">— 0 penalties deducted</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600" id="sum-rewards-spent">— 0 rewards claimed</div>
+          <div style="font-size:12px;color:var(--teal-l);font-weight:800" id="sum-carry">= 0 pts carry forward</div>
         </div>
       </div>
 
       <div class="stat-row">
-        <div class="scard green"><div class="snum">0%</div><div class="slbl">completion</div></div>
-        <div class="scard blue"><div class="snum" style="font-size:20px">0/30</div><div class="slbl">perfect days</div></div>
+        <div class="scard green"><div class="snum" id="sum-completion">0%</div><div class="slbl">completion</div></div>
+        <div class="scard blue"><div class="snum" style="font-size:20px" id="sum-perfect">0/30</div><div class="slbl">perfect days</div></div>
       </div>
 
       <div class="card">
@@ -642,7 +642,7 @@ function showScreen(id){
   document.getElementById('s-'+id).classList.add('active');
   const idx={cal:0,dash:1,sum:2}[id];
   if(idx!==undefined) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
-  if(id==='sum') buildBarChart();
+  if(id==='sum'){ buildSummary(); buildBarChart(); }
   if(id==='dash') buildMissedTasks(currentWeekStart);
 }
 function updateBalanceDisplay(){
@@ -971,17 +971,6 @@ function buildRewards(){
        </div>`;
     c.appendChild(div);
   });
-  /* Summary rewards list */
-  const sr=document.getElementById('sum-rewards-list'); if(!sr) return;
-  sr.innerHTML='';
-  Object.entries(claimedRewards).forEach(([i,date])=>{
-    const div=document.createElement('div'); div.className='mrow';
-    div.innerHTML=`<span style="flex:1;font-size:12px;color:var(--text)">${REWARDS[i].n}</span><span style="font-size:11px;color:var(--muted);font-weight:600">${date}</span>`;
-    sr.appendChild(div);
-  });
-  if(Object.keys(claimedRewards).length===0){
-    sr.innerHTML='<div style="font-size:12px;color:var(--hint);padding:6px 0">No rewards claimed yet</div>';
-  }
 }
 function openRewModal(idx){
   editRewIdx=idx;
@@ -1096,6 +1085,65 @@ function addPen(){
   const n=document.getElementById('pen-n').value.trim(), p=parseInt(document.getElementById('pen-p').value)||0;
   if(n&&p){PENALTIES.push({n,p,type:'pts'}); buildPenalties();}
   closeModal('pen-modal'); saveState();
+}
+
+/* ── SUMMARY ── */
+function buildSummary(){
+  let totalEarned=0;
+  Object.entries(taskState).forEach(([k,done])=>{
+    if(!done) return;
+    const p=k.split('-'), i=parseInt(p[p.length-1]), dn=p[1];
+    const ts=TASKS.filter(t=>t.d.includes(dn)).sort((a,b)=>a.s-b.s);
+    if(ts[i]&&ts[i].p) totalEarned+=ts[i].p;
+  });
+  Object.values(bonusPoints).forEach(b=>totalEarned+=b);
+  const penalised=PENALTIES._applied||0;
+  const spent=Object.keys(claimedRewards).reduce((s,i)=>s+REWARDS[i].p,0);
+  const carryFwd=Math.max(0,totalEarned-penalised-spent);
+
+  document.getElementById('sum-pts').textContent=totalEarned;
+  document.getElementById('sum-penalties').textContent=`— ${penalised} pts penalties deducted`;
+  document.getElementById('sum-rewards-spent').textContent=`— ${spent} pts rewards claimed`;
+  document.getElementById('sum-carry').textContent=`= ${carryFwd} pts carry forward`;
+
+  // Completion % — only past days (up to TODAY)
+  let totalPossible=0, totalDone=0, perfectDays=0, activeDayCount=0;
+  for(let d=SUMMER_START;d<=Math.min(TODAY,30);d++){
+    const dw=new Date(2026,5,d).getDay();
+    const dn=DO[(dw+6)%7];
+    const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
+    if(tasks.length===0) continue;
+    activeDayCount++;
+    totalPossible+=tasks.length;
+    let dayDone=0;
+    tasks.forEach((t,i)=>{ if(taskState[`${d}-${dn}-${i}`]) dayDone++; });
+    totalDone+=dayDone;
+    // Perfect day = all URGENT tasks completed
+    const urgentTasks=tasks.filter(t=>t.ug==='u');
+    const urgentDone=urgentTasks.every((t,_)=>{
+      const idx=tasks.indexOf(t);
+      return taskState[`${d}-${dn}-${idx}`]||false;
+    });
+    if(urgentTasks.length>0 && urgentDone) perfectDays++;
+  }
+  const pct=totalPossible>0?Math.round(totalDone/totalPossible*100):0;
+  document.getElementById('sum-completion').textContent=pct+'%';
+  document.getElementById('sum-perfect').textContent=perfectDays+'/'+activeDayCount;
+
+  // Rewards claimed list
+  const sr=document.getElementById('sum-rewards-list'); sr.innerHTML='';
+  const claimed=Object.entries(claimedRewards);
+  if(claimed.length===0){
+    sr.innerHTML='<div style="font-size:12px;color:var(--hint);padding:6px 0">No rewards claimed yet</div>';
+  } else {
+    claimed.forEach(([i,date])=>{
+      const div=document.createElement('div'); div.className='mrow';
+      div.innerHTML=`<span style="flex:1;font-size:12px;color:var(--text)">${REWARDS[i].n}</span>`+
+        `<span style="font-size:11px;color:var(--amber);font-weight:600">${REWARDS[i].p} pts</span>`+
+        `<span style="font-size:11px;color:var(--muted);font-weight:600;margin-left:8px">${date}</span>`;
+      sr.appendChild(div);
+    });
+  }
 }
 
 /* ── BAR CHART ── */
