@@ -878,6 +878,7 @@ function savePts(){
 /* ── MISSED TASKS — real data ── */
 let currentWeekStart=1; // track which week is selected
 function buildMissedTasks(weekStartDate){
+  recalcBalance();  // sync first
   currentWeekStart=weekStartDate;
   const list=document.getElementById('missed-list');
   list.innerHTML='';
@@ -950,6 +951,7 @@ function buildWTabs(){
 
 /* ── REWARDS ── */
 function buildRewards(){
+  recalcBalance();  // always sync balance first
   const c=document.getElementById('rlist'); c.innerHTML='';
   REWARDS.forEach((r,i)=>{
     const cl=claimedRewards[i], canAfford=balance>=r.p;
