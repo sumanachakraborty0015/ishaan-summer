@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1D9E75"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
-<title>Ishaan's Summer 2026</title>
+<title>Ishaan's Summer 2026 — July</title>
 <style>
 @font-face {
   font-family: 'AppFont';
@@ -120,6 +120,10 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
 .cday.wknd{background:#2a1828;color:var(--pink-l)}
 .cday.wknd:hover{background:#3a2038}
 .cday.today{background:var(--blue);color:white;border-radius:10px}
+.cday.vacation{background:#3a2418;color:var(--coral-l);cursor:pointer}
+.cday.vacation:hover{background:#4a2e1e}
+.cday.vacation .vac-icon{font-size:14px;line-height:1}
+.cday.vacation .vac-lbl{font-size:7px;font-weight:700;letter-spacing:.02em;color:var(--coral-l);margin-top:1px}
 .cdots{display:flex;gap:2px;margin-top:2px}
 .cdot{width:4px;height:4px;border-radius:50%}
 .cdot.u{background:var(--red)}
@@ -269,10 +273,10 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
     <div id="s-cal" class="screen active">
       <div class="screen-hdr">
         <div>
-          <div class="display" style="font-size:22px;color:var(--text)">June 2026</div>
+          <div class="display" style="font-size:22px;color:var(--text)">July 2026</div>
           <div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:1px">Ishaan's Summer Routine</div>
         </div>
-        <div class="badge-pill">30 days</div>
+        <div class="badge-pill">31 days</div>
       </div>
 
       <div class="must-wrap">
@@ -305,16 +309,17 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
         <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Urgent tasks</div>
         <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>Regular tasks</div>
         <div class="leg-item"><div class="leg-dot" style="background:var(--blue);border-radius:3px;width:10px;height:10px"></div>Today</div>
+        <div class="leg-item">🏖️ Vacation</div>
       </div>
     </div>
 
     <!-- ═══ DAY VIEW ═══ -->
     <div id="s-day" class="screen">
-      <div class="back-btn" onclick="showScreen('cal')">←June 2026</div>
+      <div class="back-btn" onclick="showScreen('cal')">←July 2026</div>
       <div class="day-hdr">
         <div class="day-hdr-top">
           <div>
-            <div class="day-name" id="dttl">Monday, June 1</div>
+            <div class="day-name" id="dttl">Monday, July 13</div>
             <div class="day-sub" id="dsub">0 tasks today</div>
           </div>
           <div class="pts-badge" id="ptsd">0 pts</div>
@@ -375,25 +380,32 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
     <!-- ═══ JUNE SUMMARY ═══ -->
     <div id="s-sum" class="screen">
       <div class="screen-hdr">
-        <div class="display" style="font-size:20px">June summary</div>
+        <div class="display" style="font-size:20px">July summary</div>
         <div class="badge-pill" style="background:var(--amber-bg);color:var(--amber-l);border-color:var(--amber)">End of month</div>
       </div>
 
-      <div class="sum-banner">
+      <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em">Carry forward from June</div>
+          <div style="font-size:20px;font-weight:800;color:var(--teal-l);margin-top:2px" id="cf-display">605 pts</div>
+        </div>
+        <button onclick="openCFModal()" aria-label="Edit carry forward" style="width:36px;height:36px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;flex-shrink:0">✏️</button>
+      </div>
+
+      <div class="sum-banner" style="flex-direction:column;align-items:stretch;gap:6px">
+        <div style="font-size:12px;color:var(--teal-l);font-weight:700" id="sum-carry-from">+ 605 pts carried from June</div>
+        <div style="display:flex;align-items:baseline;gap:8px">
           <div class="sum-big" id="sum-pts">0</div>
-          <div style="font-size:11px;color:var(--teal);font-weight:700;margin-top:2px">total points earned</div>
+          <div style="font-size:11px;color:var(--teal);font-weight:700">pts earned in July</div>
         </div>
-        <div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600" id="sum-penalties">— 0 penalties deducted</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600" id="sum-rewards-spent">— 0 rewards claimed</div>
-          <div style="font-size:12px;color:var(--teal-l);font-weight:800" id="sum-carry">= 0 pts carry forward</div>
-        </div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600" id="sum-penalties">— 0 pts penalties</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600" id="sum-rewards-spent">— 0 pts rewards</div>
+        <div style="font-size:13px;color:var(--teal-l);font-weight:800;margin-top:2px" id="sum-carry">= 0 pts carry forward to August</div>
       </div>
 
       <div class="stat-row">
         <div class="scard green"><div class="snum" id="sum-completion">0%</div><div class="slbl">completion</div></div>
-        <div class="scard blue"><div class="snum" style="font-size:20px" id="sum-perfect">0/30</div><div class="slbl">perfect days</div></div>
+        <div class="scard blue"><div class="snum" style="font-size:20px" id="sum-perfect">0/19</div><div class="slbl">perfect days</div></div>
       </div>
 
       <div class="card">
@@ -402,12 +414,12 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
       </div>
 
       <div class="card">
-        <div class="card-ttl">🎁Rewards claimed in June</div>
+        <div class="card-ttl">🎁Rewards claimed in July</div>
         <div id="sum-rewards-list"></div>
       </div>
 
       <button onclick="emailSummary()" style="width:100%;padding:14px;border-radius:var(--radius);background:var(--blue);color:white;border:none;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">
-        ✉️Email June Summary
+        ✉️Email July Summary
       </button>
     </div>
 
@@ -416,7 +428,7 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
   <!-- Bottom nav -->
   <nav class="nav">
     <button class="nav-btn active" onclick="showScreen('cal')">
-      📅June
+      📅July
     </button>
     <button class="nav-btn" onclick="showScreen('dash')">
       📊Weekly
@@ -467,6 +479,18 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
   </div>
 </div>
 
+<div class="modal-overlay" id="cf-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-ttl">Edit carry forward from June</div>
+    <input class="modal-input" type="number" id="cf-in" placeholder="Points carried from June"/>
+    <div class="modal-btns">
+      <button class="mbtn cancel" onclick="closeModal('cf-modal')">Cancel</button>
+      <button class="mbtn save" onclick="saveCF()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="must-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -484,19 +508,20 @@ h3{font-size:15px;font-weight:700;color:var(--text)}
 <script>
 /* ═══════════════════════════════════════════
    DATA — all times in minutes from midnight (CDT = UTC-5)
-   Mon Jun 1–7:  Tennis 17:00–18:30, Dinner 19:00–20:00
-   Mon Jun 8–30: Tennis 17:30–19:00, Dinner 19:30–20:30
-   Thur Karate:  17:30–18:30
+   Jul 1–12: Vacation — no tasks, no tracking
+   Mon Tennis (all July): 5:30–7:00 PM, Dinner 7:30–8:30 PM
+   Tue Piano (every Tuesday): 6:00–7:00 PM
+   Thu Karate: 6:25–7:30 PM, Dinner 8:00–9:00 PM
    Sun: Bike with Dad (anytime), Clean Room & Bath 19:00–20:00
-   date-specific tasks use the `dateRange` field [startDate, endDate] (June dates)
+   date-specific tasks use the `dateRange` field [startDate, endDate] (July dates)
 ═══════════════════════════════════════════ */
 const DO=["Mon","Tue","Wed","Thur","Fri","Sat","Sun"];
 const DF=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 const CAT_MAP={"Self care":"cp-sc","Physical":"cp-ph","Learning":"cp-le","Creative":"cp-cr","Fun":"cp-fu"};
 
-/* Helper: given June date & dayName, return matching tasks */
+/* Helper: given July date & dayName, return matching tasks */
 function tasksForDay(date, dn){
-  if(date < SUMMER_START) return [];   /* no routine before Jun 3 */
+  if(date < SUMMER_START) return [];   /* Jul 1–12 = vacation, no tasks */
   return TASKS.filter(t=>{
     if(!t.d.includes(dn)) return false;
     if(t.dateRange){
@@ -526,14 +551,11 @@ const TASKS=[
   {n:"Drawing",                     s:540, e:600,  d:["Sat"],                                         p:10,  c:"Creative",  ug:"u"},
   {n:"Music Practice",              s:960, e:990,  d:["Tue","Thur","Sat"],                            p:5,   c:"Creative",  ug:"m"},
   {n:"Snack",                       s:990, e:1005, d:["Mon","Tue","Wed","Thur","Fri","Sat"],        p:null,c:"Self care", ug:"l"},
-  /* ── Mon Jun 1–7: Tennis 5:00–6:30 PM, Dinner 7:00–8:00 PM ── */
-  {n:"Tennis",                      s:1020,e:1110, d:["Mon"], dateRange:[1,7],                       p:null,c:"Physical",  ug:"m"},
-  {n:"Dinner",                      s:1140,e:1200, d:["Mon"], dateRange:[1,7],                       p:null,c:"Self care", ug:"m"},
-  /* ── Mon Jun 8–30: Tennis 5:30–7:00 PM, Dinner 7:30–8:30 PM ── */
-  {n:"Tennis",                      s:1050,e:1140, d:["Mon"], dateRange:[8,30],                      p:null,c:"Physical",  ug:"m"},
-  {n:"Dinner",                      s:1170,e:1230, d:["Mon"], dateRange:[8,30],                      p:null,c:"Self care", ug:"m"},
-  /* ── Tue ── */
-  {n:"Piano",                       s:1080,e:1125, d:["Tue"], dateRange:[16,16],                     p:null,c:"Creative",  ug:"m"},
+  /* ── Mon: Tennis 5:30–7:00 PM, Dinner 7:30–8:30 PM — all July, no dateRange split ── */
+  {n:"Tennis",                      s:1050,e:1140, d:["Mon"],                                        p:null,c:"Physical",  ug:"m"},
+  {n:"Dinner",                      s:1170,e:1230, d:["Mon"],                                        p:null,c:"Self care", ug:"m"},
+  /* ── Tue: Piano every Tuesday 6:00–7:00 PM ── */
+  {n:"Piano",                       s:1080,e:1140, d:["Tue"],                                        p:null,c:"Creative",  ug:"m"},
   {n:"Dinner",                      s:1140,e:1200, d:["Tue","Fri","Sat"],                            p:null,c:"Self care", ug:"m"},
   /* ── Wed ── */
   {n:"Swim",                        s:1140,e:1200, d:["Wed"],                                        p:null,c:"Physical",  ug:"m"},
@@ -591,17 +613,18 @@ let editPtsKey=null, editRewIdx=-1, mustType=null;
 let pendPenIdx=null, pendPenPts=null, lastPenIdx=null, lastPenPts=null;
 let curDay=null, curDayName=null;
 let undoTimer=null;
+let carryForwardPts=605;   /* editable via pencil icon on Summary screen */
 
-const TODAY = (()=>{ const now=new Date(); return (now.getFullYear()===2026&&now.getMonth()===5) ? now.getDate() : (now<new Date(2026,5,1)?0:30); })();
-const SUMMER_START=3;
-const STORE_KEY='ishaan_summer_2026';
+const TODAY = (()=>{ const now=new Date(); return (now.getFullYear()===2026&&now.getMonth()===6) ? now.getDate() : (now<new Date(2026,6,1)?0:31); })();
+const SUMMER_START=13;   /* routine active from July 13; Jul 1–12 = vacation */
+const STORE_KEY='ishaan_july_2026';
 
 /* ── PERSIST ── */
 function saveState(){
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify({
       taskState, claimedRewards, balance, bonusPoints,
-      mustM, mustN,
+      mustM, mustN, carryForwardPts,
       REWARDS: REWARDS.map(r=>({n:r.n,p:r.p})),
       PENALTIES: PENALTIES.filter(p=>!p._meta).map(p=>({n:p.n,p:p.p,type:p.type,action:p.action||''})),
       penaltiesApplied: PENALTIES._applied||0,
@@ -619,6 +642,7 @@ function loadState(){
     if(s.bonusPoints) bonusPoints=s.bonusPoints;
     if(s.mustM&&s.mustM.length) mustM=s.mustM;
     if(s.mustN&&s.mustN.length) mustN=s.mustN;
+    if(typeof s.carryForwardPts==='number') carryForwardPts=s.carryForwardPts;
     if(s.REWARDS&&s.REWARDS.length) REWARDS.splice(0,REWARDS.length,...s.REWARDS);
     if(s.PENALTIES&&s.PENALTIES.length) PENALTIES.splice(0,PENALTIES.length,...s.PENALTIES);
     if(s.penaltiesApplied) PENALTIES._applied=s.penaltiesApplied;
@@ -650,6 +674,20 @@ function updateBalanceDisplay(){
   document.getElementById('dp').textContent=balance;
 }
 function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+/* ── CARRY FORWARD ── */
+function openCFModal(){
+  document.getElementById('cf-in').value=carryForwardPts;
+  document.getElementById('cf-modal').classList.add('show');
+}
+function saveCF(){
+  const v=parseInt(document.getElementById('cf-in').value);
+  if(!isNaN(v)&&v>=0) carryForwardPts=v;
+  closeModal('cf-modal');
+  recalcBalance();
+  buildSummary();
+  saveState();
+}
 
 /* ── MUST BOXES ── */
 function buildMust(){
@@ -685,21 +723,19 @@ function delMust(type,i){
 /* ── CALENDAR ── */
 function buildCal(){
   const g=document.getElementById('cal'); g.innerHTML='';
-  const fd=new Date(2026,5,1).getDay(), off=(fd+6)%7;
+  const fd=new Date(2026,6,1).getDay(), off=(fd+6)%7;
   for(let i=0;i<off;i++){const e=document.createElement('div');e.className='cday empty';g.appendChild(e);}
-  for(let d=1;d<=30;d++){
+  for(let d=1;d<=31;d++){
     const el=document.createElement('div');
-    const dw=new Date(2026,5,d).getDay();
+    const dw=new Date(2026,6,d).getDay();
     const dn=DO[(dw+6)%7];
     const isToday=(d===TODAY);
-    const isPreSummer=(d<SUMMER_START);
-    if(isPreSummer){
-      /* Jun 1–2: greyed out, no tap */
-      el.className='cday empty';
-      el.style.opacity='.25';
-      el.style.cursor='default';
-      el.style.pointerEvents='none';
-      const nm=document.createElement('div'); nm.textContent=d; el.appendChild(nm);
+    const isVacation=(d<SUMMER_START);
+    if(isVacation){
+      /* Jul 1–12: Vacation — coral/sand, no tasks, no tracking */
+      el.className='cday vacation'+(isToday?' today':'');
+      el.innerHTML=`<span>${d}</span><span class="vac-icon">🏖️</span><span class="vac-lbl">Vacation</span>`;
+      el.onclick=()=>showToast('🏖️ Vacation day — rest and enjoy!');
       g.appendChild(el);
       continue;
     }
@@ -747,7 +783,7 @@ function buildStreak(viewedDay, viewedDn){
     let cls='sday ';
     if(isViewed){
       cls+='today-s';
-    } else if(dayDate < SUMMER_START || dayDate > 30){
+    } else if(dayDate < SUMMER_START || dayDate > 31){
       cls+='future'; // outside range
     } else {
       const done=isDayDone(dayDate,dn);
@@ -761,7 +797,7 @@ function buildStreak(viewedDay, viewedDn){
   for(let i=di-1;i>=0;i--){
     const dd=mondayDate+i;
     const dn2=DO[i];
-    if(dd<SUMMER_START||dd>30) break;
+    if(dd<SUMMER_START||dd>31) break;
     const done=isDayDone(dd,dn2);
     if(done===true) streak++;
     else if(done===false) break;
@@ -774,7 +810,7 @@ function buildStreak(viewedDay, viewedDn){
 function openDay(d,dn){
   curDay=d; curDayName=dn;
   const di=DO.indexOf(dn);
-  document.getElementById('dttl').textContent=DF[di]+', June '+d;
+  document.getElementById('dttl').textContent=DF[di]+', July '+d;
   const isSun=dn==='Sun';
   const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
   document.getElementById('dsub').textContent=
@@ -885,7 +921,7 @@ function buildMissedTasks(weekStartDate){
   const missed=[];
   for(let i=0;i<7;i++){
     const d=weekStartDate+i;
-    if(d<SUMMER_START||d>30||d>TODAY) continue;  // skip future & pre-summer
+    if(d<SUMMER_START||d>31||d>TODAY) continue;  // skip future & vacation
     const dn=DO[i];
     const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
     tasks.forEach((t,ti)=>{
@@ -901,7 +937,7 @@ function buildMissedTasks(weekStartDate){
   let weekPts=0;
   for(let i=0;i<7;i++){
     const d=weekStartDate+i;
-    if(d<SUMMER_START||d>30||d>TODAY) continue;  // skip future
+    if(d<SUMMER_START||d>31||d>TODAY) continue;  // skip future
     const dn=DO[i];
     const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
     tasks.forEach((t,ti)=>{
@@ -935,7 +971,7 @@ function buildMissedTasks(weekStartDate){
 /* ── WEEK TABS ── */
 function buildWTabs(){
   const c=document.getElementById('wtabs');
-  const weeks=[['Jun 1–7',1],['Jun 8–14',8],['Jun 15–21',15],['Jun 22–28',22]];
+  const weeks=[['Jul 13–19',13],['Jul 20–26',20],['Jul 27–31',27]];
   weeks.forEach(([label,startDate],i)=>{
     const b=document.createElement('button'); b.className='wtab'+(i===0?' active':'');
     b.textContent=label;
@@ -990,7 +1026,7 @@ function saveRew(){
   closeModal('rew-modal'); buildRewards(); saveState();
 }
 function recalcBalance(){
-  let earned=0;
+  let earned=carryForwardPts;   /* starting earned amount = carry forward from June */
   Object.entries(taskState).forEach(([k,done])=>{
     if(!done) return;
     const p=k.split('-'), i=parseInt(p[p.length-1]), dn=p[1];
@@ -1006,7 +1042,7 @@ function recalcBalance(){
 }
 function claimRew(i,p){
   if(balance<p){showToast('Not enough points!'); return;}
-  claimedRewards[i]='Jun '+new Date().getDate();
+  claimedRewards[i]='Jul '+new Date().getDate();
   recalcBalance(); buildRewards();
   showToast('Reward claimed!'); saveState();
 }
@@ -1091,7 +1127,7 @@ function addPen(){
 
 /* ── SUMMARY ── */
 function buildSummary(){
-  let totalEarned=0;
+  let totalEarned=0;   /* pts earned in July only (excludes carry forward) */
   Object.entries(taskState).forEach(([k,done])=>{
     if(!done) return;
     const p=k.split('-'), i=parseInt(p[p.length-1]), dn=p[1];
@@ -1101,17 +1137,19 @@ function buildSummary(){
   Object.values(bonusPoints).forEach(b=>totalEarned+=b);
   const penalised=PENALTIES._applied||0;
   const spent=Object.keys(claimedRewards).reduce((s,i)=>s+REWARDS[i].p,0);
-  const carryFwd=Math.max(0,totalEarned-penalised-spent);
+  const carryFwd=Math.max(0,carryForwardPts+totalEarned-penalised-spent);
 
+  document.getElementById('cf-display').textContent=carryForwardPts+' pts';
+  document.getElementById('sum-carry-from').textContent=`+ ${carryForwardPts} pts carried from June`;
   document.getElementById('sum-pts').textContent=totalEarned;
-  document.getElementById('sum-penalties').textContent=`— ${penalised} pts penalties deducted`;
-  document.getElementById('sum-rewards-spent').textContent=`— ${spent} pts rewards claimed`;
-  document.getElementById('sum-carry').textContent=`= ${carryFwd} pts carry forward`;
+  document.getElementById('sum-penalties').textContent=`— ${penalised} pts penalties`;
+  document.getElementById('sum-rewards-spent').textContent=`— ${spent} pts rewards`;
+  document.getElementById('sum-carry').textContent=`= ${carryFwd} pts carry forward to August`;
 
   // Completion % — only past days (up to TODAY)
   let totalPossible=0, totalDone=0, perfectDays=0, activeDayCount=0;
-  for(let d=SUMMER_START;d<=Math.min(TODAY,30);d++){
-    const dw=new Date(2026,5,d).getDay();
+  for(let d=SUMMER_START;d<=Math.min(TODAY,31);d++){
+    const dw=new Date(2026,6,d).getDay();
     const dn=DO[(dw+6)%7];
     const tasks=tasksForDay(d,dn).sort((a,b)=>a.s-b.s);
     if(tasks.length===0) continue;
@@ -1151,8 +1189,8 @@ function buildSummary(){
 /* ── BAR CHART ── */
 function buildBarChart(){
   const c=document.getElementById('bar-chart'); c.innerHTML='';
-  const weeks=[[1,7],[8,14],[15,21],[22,28]];
-  const colors=['#9FE1CB','#5DCAA5','#1D9E75','#0F6E56'];
+  const weeks=[[13,19],[20,26],[27,31]];
+  const colors=['#9FE1CB','#5DCAA5','#0F6E56'];
   const vals=weeks.map(([lo,hi])=>{
     let pts=0;
     Object.entries(taskState).forEach(([k,done])=>{
@@ -1177,18 +1215,17 @@ function buildBarChart(){
 /* ── EMAIL SUMMARY ── */
 function emailSummary(){
   /* Gather all data */
-  let totalEarned=0;
+  let totalEarned=0;   // July earned only
   Object.entries(taskState).forEach(([k,done])=>{
     if(!done) return;
     const p=k.split('-'), i=parseInt(p[p.length-1]), dn=p[1];
     const ts=TASKS.filter(t=>t.d.includes(dn)).sort((a,b)=>a.s-b.s);
     if(ts[i]&&ts[i].p) totalEarned+=ts[i].p;
   });
+  Object.values(bonusPoints).forEach(b=>totalEarned+=b);
   const totalSpent=Object.keys(claimedRewards).reduce((s,i)=>s+REWARDS[i].p,0);
   const totalPen=PENALTIES._applied||0;
-  const carryFwd=Math.max(0,totalEarned-totalSpent-totalPen);
-  const totalDays=Object.keys(taskState).map(k=>k.split('-').slice(0,2).join('-'));
-  const uniqueDays=[...new Set(totalDays)];
+  const carryFwd=Math.max(0,carryForwardPts+totalEarned-totalSpent-totalPen);
   const rewardRows=Object.entries(claimedRewards).map(([i,date])=>
     `<tr><td>${REWARDS[i].n}</td><td style="text-align:right;color:#1D9E75">${REWARDS[i].p} pts</td><td style="text-align:right;color:#888">${date}</td></tr>`
   ).join('')||'<tr><td colspan="3" style="color:#888">None claimed</td></tr>';
@@ -1203,9 +1240,9 @@ body{font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;color:#222}
 .body{padding:24px 28px}
 .stat-row{display:flex;gap:12px;margin-bottom:20px}
 .stat{flex:1;background:#f8f8f8;border-radius:8px;padding:12px;text-align:center}
-.stat .num{font-size:28px;font-weight:700}
+.stat .num{font-size:24px;font-weight:700}
 .stat .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
-.green{color:#1D9E75}.red{color:#E24B4A}.amber{color:#EF9F27}.blue{color:#378ADD}
+.green{color:#1D9E75}.red{color:#E24B4A}.amber{color:#EF9F27}.blue{color:#378ADD}.teal{color:#0F6E56}
 h3{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px;border-bottom:1px solid #eee;padding-bottom:6px}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}
 td{padding:7px 0;border-bottom:1px solid #f0f0f0}
@@ -1213,43 +1250,45 @@ td{padding:7px 0;border-bottom:1px solid #f0f0f0}
 </style></head><body>
 <div class="wrap">
   <div class="hdr">
-    <h1>Ishaan's Summer 2026 — June Summary</h1>
+    <h1>Ishaan's Summer 2026 — July Summary</h1>
     <p>Generated ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</p>
   </div>
   <div class="body">
     <div class="stat-row">
-      <div class="stat"><div class="num green">${totalEarned}</div><div class="lbl">pts earned</div></div>
+      <div class="stat"><div class="num teal">${carryForwardPts}</div><div class="lbl">carried from June</div></div>
+      <div class="stat"><div class="num green">${totalEarned}</div><div class="lbl">earned in July</div></div>
       <div class="stat"><div class="num red">${totalPen}</div><div class="lbl">pts penalised</div></div>
       <div class="stat"><div class="num amber">${totalSpent}</div><div class="lbl">pts spent</div></div>
-      <div class="stat"><div class="num blue">${carryFwd}</div><div class="lbl">carry forward</div></div>
     </div>
     <h3>Rewards claimed</h3>
     <table>${rewardRows}</table>
     <h3>Points breakdown</h3>
     <table>
-      <tr><td>Total earned from tasks</td><td style="text-align:right;color:#1D9E75">+${totalEarned} pts</td></tr>
+      <tr><td>Carried forward from June</td><td style="text-align:right;color:#0F6E56">+${carryForwardPts} pts</td></tr>
+      <tr><td>Total earned in July</td><td style="text-align:right;color:#1D9E75">+${totalEarned} pts</td></tr>
       <tr><td>Penalties deducted</td><td style="text-align:right;color:#E24B4A">−${totalPen} pts</td></tr>
       <tr><td>Rewards claimed</td><td style="text-align:right;color:#EF9F27">−${totalSpent} pts</td></tr>
-      <tr style="font-weight:700"><td>Balance carried forward</td><td style="text-align:right;color:#378ADD">${carryFwd} pts</td></tr>
+      <tr style="font-weight:700"><td>Balance carried forward to August</td><td style="text-align:right;color:#378ADD">${carryFwd} pts</td></tr>
     </table>
   </div>
-  <div class="footer">Ishaan's Summer Routine Tracker • June 2026</div>
+  <div class="footer">Ishaan's Summer Routine Tracker • July 2026</div>
 </div>
 </body></html>`;
 
-  const subject=encodeURIComponent("Ishaan's June 2026 Summary");
-  const body=encodeURIComponent("Please find Ishaan's June 2026 routine summary below.\n\n"
-    +"Total Earned: "+totalEarned+" pts\n"
+  const subject=encodeURIComponent("Ishaan's July 2026 Summary");
+  const body=encodeURIComponent("Please find Ishaan's July 2026 routine summary below.\n\n"
+    +"Carried from June: "+carryForwardPts+" pts\n"
+    +"Earned in July: "+totalEarned+" pts\n"
     +"Penalties: -"+totalPen+" pts\n"
     +"Rewards Claimed: -"+totalSpent+" pts\n"
-    +"Carry Forward: "+carryFwd+" pts\n\n"
-    +"(Full HTML summary is attached in the app — tap Email June Summary to resend)");
+    +"Carry Forward to August: "+carryFwd+" pts\n\n"
+    +"(Full HTML summary is attached in the app — tap Email July Summary to resend)");
   /* Try to open mail with the HTML as an attachment via data URI — fallback to mailto */
   try{
     const blob=new Blob([html],{type:'text/html'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url; a.download='Ishaan_June_2026_Summary.html';
+    a.href=url; a.download='Ishaan_July_2026_Summary.html';
     a.click(); URL.revokeObjectURL(url);
     setTimeout(()=>window.location.href=`mailto:?subject=${subject}&body=${body}`,600);
   }catch(e){
@@ -1268,7 +1307,7 @@ loadState();
 buildMust();
 buildCal();
 buildWTabs();
-buildMissedTasks(1);
+buildMissedTasks(13);
 buildRewards();
 buildPenalties();
 buildBarChart();
