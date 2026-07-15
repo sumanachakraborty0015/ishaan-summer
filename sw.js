@@ -1,4 +1,4 @@
-const CACHE = 'ishaan-summer-v1';
+const CACHE = 'ishaan-summer-v2-july';
 const ASSETS = [
   '/index.html',
   '/manifest.json',
